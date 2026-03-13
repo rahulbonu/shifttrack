@@ -269,9 +269,13 @@
     <!-- PAYROLL CARD (manager only) -->
     <section class="card payroll-card" id="payrollCard" style="display:none">
       <div class="card-header">
-        <div>
+        <div class="payroll-title-group">
           <h2>Payroll</h2>
-          <div class="log-week-label" id="payrollWeekLabel"></div>
+          <div class="payroll-week-nav">
+            <button class="btn-week-nav" onclick="changeWeek(-1)" title="Previous week">&#8592;</button>
+            <div class="log-week-label" id="payrollWeekLabel"></div>
+            <button class="btn-week-nav" id="payrollBtnNext" onclick="changeWeek(1)" title="Next week">&#8594;</button>
+          </div>
         </div>
         <div class="payroll-controls">
           <div class="ot-wrap">

@@ -499,6 +499,8 @@ function setWeekRange() {
   const payrollLbl = document.getElementById('payrollWeekLabel');
   if (payrollLbl) payrollLbl.textContent = `${label}  ·  ${rangeStr}`;
   document.getElementById('btnNextWeek').disabled = weekOffset >= 0;
+  const payrollNext = document.getElementById('payrollBtnNext');
+  if (payrollNext) payrollNext.disabled = weekOffset >= 0;
 }
 
 function changeWeek(delta) {
