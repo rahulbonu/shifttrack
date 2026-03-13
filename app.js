@@ -15,6 +15,28 @@ let state = {
 let durationInterval = null;
 let weekOffset = 0; // 0 = current week, -1 = last week, etc.
 
+// ---- FIREBASE ----
+const firebaseConfig = {
+  apiKey: "AIzaSyBxigyI4DqxBTDQRMOzzJQo94ybu77xTyo",
+  authDomain: "shifttrack-aa001.firebaseapp.com",
+  databaseURL: "https://shifttrack-aa001-default-rtdb.firebaseio.com",
+  projectId: "shifttrack-aa001",
+  storageBucket: "shifttrack-aa001.firebasestorage.app",
+  messagingSenderId: "63825554190",
+  appId: "1:63825554190:web:8a134542b29f5da857855f"
+};
+firebase.initializeApp(firebaseConfig);
+const _db = firebase.database();
+const _dataRef = _db.ref('shifttrack');
+let _dataLoaded = false;
+
+// Firebase may return arrays as objects — normalize back to array
+function fbArr(val) {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  return Object.values(val);
+}
+
 // ---- INIT ----
 window.addEventListener('DOMContentLoaded', () => {
   loadFromStorage();
@@ -35,61 +57,63 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// ---- STORAGE ----
+// ---- STORAGE (Firebase) ----
 function loadFromStorage() {
-  try {
-    const saved = localStorage.getItem('shifttrack_data');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      // Migrate old string-based employees to objects
-      state.employees = (parsed.employees || []).map(e =>
-        typeof e === 'string' ? { name: e, code: '' } : e
-      );
-      // Ensure all employees have a rate field
-      state.employees = state.employees.map(e => ({ rate: 0, ...e }));
-      // Load overtime threshold (null means not set)
-      if (typeof parsed.overtimeThreshold === 'number' && parsed.overtimeThreshold > 0) {
-        state.overtimeThreshold = parsed.overtimeThreshold;
-      } else {
-        state.overtimeThreshold = null;
-      }
-      state.shifts = parsed.shifts || [];
-      // Migrate old single activeShift to activeShifts map
-      if (parsed.activeShifts && typeof parsed.activeShifts === 'object') {
-        state.activeShifts = parsed.activeShifts;
-      } else if (parsed.activeShift) {
-        state.activeShifts = { [parsed.activeShift.employee]: parsed.activeShift };
-      }
-      // Only use stored managerCode if it's a non-empty string
+  _dataRef.on('value', snapshot => {
+    const parsed = snapshot.val();
+    const prevSession = state.session;
+
+    if (parsed) {
+      state.employees = fbArr(parsed.employees)
+        .map(e => typeof e === 'string' ? { name: e, code: '' } : e)
+        .map(e => ({ rate: 0, ...e }));
+      state.shifts = fbArr(parsed.shifts);
+      state.activeShifts = parsed.activeShifts && typeof parsed.activeShifts === 'object'
+        ? parsed.activeShifts : {};
+      state.overtimeThreshold = (typeof parsed.overtimeThreshold === 'number' && parsed.overtimeThreshold > 0)
+        ? parsed.overtimeThreshold : null;
       if (typeof parsed.managerCode === 'string' && parsed.managerCode.length >= 4) {
         state.managerCode = parsed.managerCode;
       }
     }
-  } catch (e) {
-    console.warn('Could not load data, clearing storage:', e);
-    localStorage.removeItem('shifttrack_data');
-  }
+
+    state.session = prevSession;
+
+    if (!_dataLoaded) {
+      _dataLoaded = true;
+    } else if (state.session) {
+      // Real-time update from another device
+      renderAll();
+      if (state.session.role === 'manager') {
+        renderEmployeeList();
+        renderPayroll();
+      }
+    }
+  });
+}
+
+function saveToStorage() {
+  _dataRef.set({
+    employees: state.employees,
+    shifts: state.shifts,
+    activeShifts: state.activeShifts,
+    managerCode: state.managerCode,
+    overtimeThreshold: state.overtimeThreshold !== null ? state.overtimeThreshold : 0,
+  }).catch(e => {
+    showToast('Warning: could not save data', 'error');
+    console.error('saveToStorage failed:', e);
+  });
 }
 
 function resetAppData() {
   if (!confirm('This will clear ALL app data (shifts, employees, settings). Continue?')) return;
-  localStorage.removeItem('shifttrack_data');
-  location.reload();
-}
-
-function saveToStorage() {
-  try {
-    localStorage.setItem('shifttrack_data', JSON.stringify({
-      employees: state.employees,
-      shifts: state.shifts,
-      activeShifts: state.activeShifts,
-      managerCode: state.managerCode,
-      overtimeThreshold: state.overtimeThreshold,
-    }));
-  } catch (e) {
-    showToast('Warning: could not save data (storage full?)', 'error');
-    console.error('saveToStorage failed:', e);
-  }
+  _dataRef.set({
+    employees: [],
+    shifts: [],
+    activeShifts: {},
+    managerCode: 'MANAGER2024',
+    overtimeThreshold: 0,
+  }).then(() => location.reload());
 }
 
 // ---- LOGIN ----
@@ -125,6 +149,7 @@ function switchLoginTab(tab) {
 }
 
 function loginEmployee() {
+  if (!_dataLoaded) { showToast('Connecting to database, please wait...', 'info'); return; }
   const name = document.getElementById('loginName').value.trim();
   const code = document.getElementById('loginCode').value.trim();
   const errEl = document.getElementById('employeeLoginError');
@@ -146,6 +171,7 @@ function loginEmployee() {
 }
 
 function loginManager() {
+  if (!_dataLoaded) { showToast('Connecting to database, please wait...', 'info'); return; }
   const code = document.getElementById('managerCodeInput').value.trim();
   const errEl = document.getElementById('managerLoginError');
   if (!code) {
