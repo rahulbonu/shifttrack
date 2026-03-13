@@ -175,13 +175,14 @@ body {
   font-family: var(--font-mono);
 }
 .btn-reset-data {
-  background: none; border: none;
-  color: var(--text-muted); font-family: var(--font-head);
+  background: none; border: 1px solid rgba(255,80,80,0.3);
+  color: var(--red, #ff5555); font-family: var(--font-head);
   font-size: 11px; cursor: pointer;
-  padding: 0; transition: color 0.2s;
-  text-decoration: underline;
+  padding: 6px 12px; border-radius: 6px;
+  transition: all 0.2s;
 }
-.btn-reset-data:hover { color: var(--red); }
+.btn-reset-data:hover { background: rgba(255,80,80,0.1); border-color: rgba(255,80,80,0.6); }
+.manager-reset-section { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
 
 .btn-back {
   background: none; border: none;
