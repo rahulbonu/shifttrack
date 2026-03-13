@@ -106,12 +106,27 @@ function saveToStorage() {
 }
 
 function resetAppData() {
-  if (!confirm('This will clear ALL app data (shifts, employees, settings). Continue?')) return;
+  document.getElementById('resetConfirmCode').value = '';
+  document.getElementById('resetError').textContent = '';
+  document.getElementById('resetModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('resetConfirmCode').focus(), 100);
+}
+
+function closeResetModal() {
+  document.getElementById('resetModal').style.display = 'none';
+}
+
+function confirmReset() {
+  const code = document.getElementById('resetConfirmCode').value.trim();
+  const errEl = document.getElementById('resetError');
+  if (!code) { errEl.textContent = 'Please enter the manager code.'; return; }
+  if (code !== state.managerCode) { errEl.textContent = 'Incorrect manager code.'; return; }
+  closeResetModal();
   _dataRef.set({
     employees: [],
     shifts: [],
     activeShifts: {},
-    managerCode: 'MANAGER2024',
+    managerCode: state.managerCode,
     overtimeThreshold: 0,
   }).then(() => location.reload());
 }

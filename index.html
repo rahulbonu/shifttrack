@@ -348,6 +348,30 @@
     </div>
   </div>
 
+  <!-- RESET CONFIRMATION MODAL -->
+  <div class="modal-overlay" id="resetModal" style="display:none">
+    <div class="modal-box" style="max-width:360px">
+      <div class="modal-header">
+        <h3>⚠ Reset App Data</h3>
+        <button class="modal-close" onclick="closeResetModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">
+          This will permanently delete <strong style="color:var(--text)">all shifts, employees, and settings</strong>. This cannot be undone.
+        </p>
+        <div class="modal-field">
+          <label>Enter Manager Code to confirm</label>
+          <input type="password" id="resetConfirmCode" placeholder="Manager code..." autocomplete="off" />
+        </div>
+        <div class="modal-error" id="resetError"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal-cancel" onclick="closeResetModal()">Cancel</button>
+        <button class="btn-modal-save" style="background:var(--red,#ff5555)" onclick="confirmReset()">Delete Everything</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <script src="app.js"></script>
