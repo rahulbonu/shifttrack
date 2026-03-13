@@ -809,6 +809,17 @@ body {
 .mgr-kpi.kpi-perfect { border-color: rgba(0,229,160,0.3); }
 .accent-warn { color: var(--accent3); }
 .mgr-kpi-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+.emp-hours-kpi { align-items: flex-start; }
+.emp-hrs-row { margin-top: 10px; }
+.emp-hrs-row:first-child { margin-top: 6px; }
+.emp-hrs-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+.emp-hrs-name { font-size: 12px; font-weight: 600; color: var(--text); }
+.emp-hrs-total { font-size: 12px; font-family: var(--font-mono); color: var(--accent); font-weight: 600; }
+.emp-hrs-bar-track { height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; margin-bottom: 4px; }
+.emp-hrs-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; }
+.emp-hrs-stores { display: flex; flex-wrap: wrap; gap: 4px; }
+.emp-hrs-store-tag { font-size: 10px; color: var(--text-muted); background: rgba(255,255,255,0.05); border-radius: 4px; padding: 1px 6px; }
+.emp-hrs-store-tag.muted { color: rgba(255,255,255,0.2); }
 .mgr-kpi-body { flex: 1; min-width: 0; }
 .mgr-kpi-label {
   font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px;

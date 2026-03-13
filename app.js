@@ -1330,9 +1330,7 @@ function renderManagerAnalytics() {
 
   const DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-  // Payroll totals
   const payroll = computePayroll();
-  const totalCost = payroll.reduce((sum, p) => sum + p.grossPay, 0);
 
   // Top performer (most hours this week)
   const topPerformer = payroll.reduce((best, p) =>
@@ -1390,31 +1388,50 @@ function renderManagerAnalytics() {
   });
   const maxStoreHrs = Math.max(...Object.values(storeHours), 0.01);
 
+  // Per-employee hours by store
+  const empStoreHours = state.employees.map(emp => {
+    const total = payroll.find(p => p.name === emp.name)?.totalHours || 0;
+    const byStore = {};
+    STORES.forEach(s => { byStore[s] = 0; });
+    weekShifts.filter(s => s.employee === emp.name).forEach(s => {
+      if (byStore[s.store] !== undefined) byStore[s.store] += s.duration / 3600000;
+    });
+    return { name: emp.name, total, byStore };
+  }).sort((a, b) => b.total - a.total);
+  const maxEmpHrs = Math.max(...empStoreHours.map(e => e.total), 0.01);
+
   // OT watch
   const otOver = payroll.filter(p => p.otHours > 0);
   const otNear = state.overtimeThreshold !== null
     ? payroll.filter(p => p.totalHours >= state.overtimeThreshold * 0.75 && p.otHours === 0 && p.totalHours > 0)
     : [];
 
-  // Week-over-week hours
-  const { sun: prevSun, sat: prevSat } = getWeekBounds(weekOffset - 1);
-  const prevShifts = state.shifts.filter(s =>
-    s.clockOut && s.clockIn >= prevSun.getTime() && s.clockIn <= prevSat.getTime()
-  );
-  const thisWeekHrs = weekShifts.reduce((sum, s) => sum + s.duration / 3600000, 0);
-  const lastWeekHrs = prevShifts.reduce((sum, s) => sum + s.duration / 3600000, 0);
-  const wowDiff = lastWeekHrs > 0 ? ((thisWeekHrs - lastWeekHrs) / lastWeekHrs * 100) : null;
-
   document.getElementById('analyticsContent').innerHTML = `
     <div class="mgr-analytics">
 
       <div class="mgr-kpi-row">
-        <div class="mgr-kpi">
-          <div class="mgr-kpi-icon">💰</div>
-          <div class="mgr-kpi-body">
-            <div class="mgr-kpi-label">Weekly Payroll</div>
-            <div class="mgr-kpi-val ${totalCost > 0 ? 'accent-green' : ''}">$${totalCost.toFixed(2)}</div>
-            ${wowDiff !== null ? `<div class="mgr-kpi-sub ${wowDiff >= 0 ? 'up' : 'down'}">${wowDiff >= 0 ? '▲' : '▼'} ${Math.abs(wowDiff).toFixed(0)}% vs last week</div>` : '<div class="mgr-kpi-sub">No prior week data</div>'}
+        <div class="mgr-kpi emp-hours-kpi">
+          <div class="mgr-kpi-icon">👥</div>
+          <div class="mgr-kpi-body" style="width:100%">
+            <div class="mgr-kpi-label">Hours by Employee</div>
+            ${empStoreHours.length === 0 ? '<div class="mgr-kpi-sub">No shifts this week</div>' :
+              empStoreHours.map(e => `
+                <div class="emp-hrs-row">
+                  <div class="emp-hrs-top">
+                    <span class="emp-hrs-name">${e.name}</span>
+                    <span class="emp-hrs-total">${e.total > 0 ? e.total.toFixed(1) + 'h' : '--'}</span>
+                  </div>
+                  <div class="emp-hrs-bar-track">
+                    <div class="emp-hrs-bar-fill" style="width:${(e.total / maxEmpHrs * 100).toFixed(1)}%"></div>
+                  </div>
+                  <div class="emp-hrs-stores">
+                    ${STORES.filter(s => e.byStore[s] > 0).map(s =>
+                      `<span class="emp-hrs-store-tag">${STORE_ICONS[s]} ${e.byStore[s].toFixed(1)}h</span>`
+                    ).join('') || '<span class="emp-hrs-store-tag muted">No shifts</span>'}
+                  </div>
+                </div>
+              `).join('')
+            }
           </div>
         </div>
         <div class="mgr-kpi">
