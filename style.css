@@ -551,6 +551,53 @@ body {
 }
 .btn-week-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
 .btn-week-nav:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-cal-icon { font-size: 13px; }
+
+/* Calendar Picker Popup */
+.cal-picker-wrap { position: relative; }
+.cal-picker-popup {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 200;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 14px; padding: 16px; width: 240px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+}
+.cal-picker-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.cal-picker-month {
+  font-size: 13px; font-weight: 700; font-family: var(--font-head);
+  color: var(--text);
+}
+.cal-picker-nav {
+  background: none; border: none; color: var(--text-muted);
+  font-size: 16px; cursor: pointer; padding: 2px 6px; border-radius: 4px;
+}
+.cal-picker-nav:hover { color: var(--accent); }
+.cal-picker-days-header {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 4px;
+}
+.cal-picker-days-header span {
+  text-align: center; font-size: 10px; color: var(--text-muted);
+  font-family: var(--font-mono); text-transform: uppercase;
+}
+.cal-picker-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;
+}
+.cal-picker-cell {
+  text-align: center; font-size: 12px; font-family: var(--font-mono);
+  color: var(--text-dim); padding: 5px 2px; border-radius: 50%;
+  cursor: pointer; transition: background 0.15s, color 0.15s;
+}
+.cal-picker-cell:not(.empty):not(.cp-future):hover { background: rgba(0,229,160,0.15); color: var(--accent); }
+.cal-picker-cell.empty { cursor: default; }
+.cal-picker-cell.cp-future { color: rgba(255,255,255,0.15); cursor: not-allowed; }
+.cal-picker-cell.cp-today { color: var(--accent); font-weight: 700; }
+.cal-picker-cell.cp-active-week {
+  background: rgba(0,229,160,0.12); border-radius: 4px;
+  outline: 1px solid rgba(0,229,160,0.3);
+}
 
 .stats-grid {
   display: grid; grid-template-columns: 1fr 1fr;

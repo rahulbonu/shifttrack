@@ -509,6 +509,95 @@ function changeWeek(delta) {
   renderPayroll();
 }
 
+// ---- CALENDAR PICKER ----
+let _calPickerDate = new Date(); // month being displayed in picker
+
+function toggleCalPicker() {
+  const popup = document.getElementById('calPickerPopup');
+  if (popup.style.display === 'none') {
+    _calPickerDate = new Date();
+    renderCalPicker();
+    popup.style.display = 'block';
+  } else {
+    popup.style.display = 'none';
+  }
+}
+
+function calPickerChangeMonth(delta) {
+  _calPickerDate.setMonth(_calPickerDate.getMonth() + delta);
+  renderCalPicker();
+}
+
+function renderCalPicker() {
+  const year = _calPickerDate.getFullYear();
+  const month = _calPickerDate.getMonth();
+  document.getElementById('calPickerMonth').textContent =
+    new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  const grid = document.getElementById('calPickerGrid');
+  grid.innerHTML = '';
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  // Get the Sunday of the currently viewed week
+  const { sun: currentWeekSun } = getWeekBounds(weekOffset);
+
+  // Leading blanks
+  for (let i = 0; i < firstDay; i++) {
+    grid.appendChild(Object.assign(document.createElement('div'), { className: 'cal-picker-cell empty' }));
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const cellDate = new Date(year, month, d);
+    cellDate.setHours(0,0,0,0);
+
+    // Sunday of this cell's week
+    const cellSun = new Date(cellDate);
+    cellSun.setDate(cellDate.getDate() - cellDate.getDay());
+    cellSun.setHours(0,0,0,0);
+
+    const isToday = cellDate.getTime() === today.getTime();
+    const isFuture = cellDate > today;
+    const isActiveWeek = cellSun.getTime() === currentWeekSun.getTime();
+
+    const cell = document.createElement('div');
+    cell.className = 'cal-picker-cell' +
+      (isToday ? ' cp-today' : '') +
+      (isActiveWeek ? ' cp-active-week' : '') +
+      (isFuture ? ' cp-future' : '');
+    cell.textContent = d;
+
+    if (!isFuture) {
+      cell.onclick = () => {
+        // Calculate weekOffset for clicked date's week
+        const todaySun = new Date(today);
+        todaySun.setDate(today.getDate() - today.getDay());
+        const diffMs = cellSun.getTime() - todaySun.getTime();
+        const diffWeeks = Math.round(diffMs / (7 * 86400000));
+        weekOffset = Math.min(0, diffWeeks);
+        setWeekRange();
+        renderWeekStats();
+        renderLog();
+        renderPayroll();
+        document.getElementById('calPickerPopup').style.display = 'none';
+      };
+    }
+
+    grid.appendChild(cell);
+  }
+}
+
+// Close picker when clicking outside
+document.addEventListener('click', e => {
+  const wrap = document.querySelector('.cal-picker-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    const popup = document.getElementById('calPickerPopup');
+    if (popup) popup.style.display = 'none';
+  }
+});
+
 function getWeekBounds(offset) {
   const now = new Date();
   const day = now.getDay();
