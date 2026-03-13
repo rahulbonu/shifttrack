@@ -119,8 +119,8 @@ function closeResetModal() {
 function confirmReset() {
   const code = document.getElementById('resetConfirmCode').value.trim();
   const errEl = document.getElementById('resetError');
-  if (!code) { errEl.textContent = 'Please enter the manager code.'; return; }
-  if (code !== state.managerCode) { errEl.textContent = 'Incorrect manager code.'; return; }
+  if (!code) { errEl.textContent = 'Please enter the reset passcode.'; return; }
+  if (code !== '1975') { errEl.textContent = 'Incorrect passcode.'; return; }
   closeResetModal();
   _dataRef.set({
     employees: [],
