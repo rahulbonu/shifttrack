@@ -881,36 +881,28 @@ function renderWeekStats() {
   renderBarChart(weekShifts, sun);
 }
 
-// ---- BAR CHART ----
-function renderBarChart(weekShifts, weekStart) {
-  const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const today = new Date().getDay();
-  const barChart = document.getElementById('barChart');
-  const barLabels = document.getElementById('barLabels');
-  barChart.innerHTML = ''; barLabels.innerHTML = '';
-
-  const hoursPerDay = Array(7).fill(0);
-  weekShifts.forEach(s => {
-    const d = new Date(s.clockIn).getDay();
-    hoursPerDay[d] += s.duration / 3600000;
-  });
-  const maxH = Math.max(...hoursPerDay, 1);
+// ---- WEEK CALENDAR ----
+function renderBarChart(_weekShifts, weekStart) {
+  const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const cal = document.getElementById('weekCalendar');
+  cal.innerHTML = '';
 
   DAYS.forEach((label, i) => {
-    const bar = document.createElement('div');
-    bar.className = 'bar' + (i === today ? ' today' : '');
-    const pct = (hoursPerDay[i] / maxH) * 100;
-    bar.style.height = pct + '%';
-    const tip = document.createElement('div');
-    tip.className = 'bar-tooltip';
-    tip.textContent = hoursPerDay[i] > 0 ? `${hoursPerDay[i].toFixed(1)}h` : '—';
-    bar.appendChild(tip);
-    barChart.appendChild(bar);
+    const cellDate = new Date(weekStart);
+    cellDate.setDate(weekStart.getDate() + i);
+    cellDate.setHours(0, 0, 0, 0);
+    const isToday = cellDate.getTime() === today.getTime();
 
-    const lbl = document.createElement('div');
-    lbl.className = 'bar-label' + (i === today ? ' today' : '');
-    lbl.textContent = label;
-    barLabels.appendChild(lbl);
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell' + (isToday ? ' cal-today' : '');
+
+    cell.innerHTML = `
+      <div class="cal-day">${label}</div>
+      <div class="cal-date">${cellDate.getDate()}</div>
+    `;
+    cal.appendChild(cell);
   });
 }
 
