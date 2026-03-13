@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ShiftTrack — Store Time Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- BACKGROUND -->
+  <div class="bg-grid"></div>
+  <div class="bg-orb orb1"></div>
+  <div class="bg-orb orb2"></div>
+
+  <!-- LOGIN OVERLAY -->
+  <div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+      <div class="login-logo">
+        <div class="logo-icon">⏱</div>
+        <div class="login-logo-title">ShiftTrack</div>
+      </div>
+
+      <!-- STEP 1: Login form -->
+      <div id="loginStep1">
+        <div class="login-tabs">
+          <button class="login-tab active" id="tabEmployee" onclick="switchLoginTab('employee')">Employee</button>
+          <button class="login-tab" id="tabManager" onclick="switchLoginTab('manager')">Manager</button>
+        </div>
+
+        <div id="employeeLoginForm">
+          <div class="login-field">
+            <label>Your Name</label>
+            <input type="text" id="loginName" placeholder="Enter your name..." autocomplete="off" />
+          </div>
+          <div class="login-field">
+            <label>Access Code</label>
+            <input type="password" id="loginCode" placeholder="Enter your access code..." autocomplete="off" />
+          </div>
+          <div class="login-error" id="employeeLoginError"></div>
+          <button class="btn-login" onclick="loginEmployee()">Login</button>
+        </div>
+
+        <div id="managerLoginForm" style="display:none">
+          <div class="login-field">
+            <label>Manager Access Code</label>
+            <input type="password" id="managerCodeInput" placeholder="Enter manager code..." autocomplete="off" />
+          </div>
+          <div class="login-error" id="managerLoginError"></div>
+          <button class="btn-login" onclick="loginManager()">Login as Manager</button>
+          <div class="login-reset-row">
+            <span class="login-hint" id="managerCodeHint"></span>
+            <button class="btn-reset-data" onclick="resetAppData()">Reset app data</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: Store selection -->
+      <div id="loginStep2" style="display:none">
+        <div class="login-step2-header">
+          <div class="login-welcome" id="loginWelcome"></div>
+          <div class="login-sub">Select your store for today</div>
+        </div>
+        <div class="store-grid">
+          <button class="store-btn" data-store="Loteria Store" onclick="selectStoreFromBtn(this)">
+            <div class="store-icon">🏪</div>
+            <div class="store-name">Loteria Store</div>
+          </button>
+          <button class="store-btn" data-store="Maria's Groceries" onclick="selectStoreFromBtn(this)">
+            <div class="store-icon">🛒</div>
+            <div class="store-name">Maria's Groceries</div>
+          </button>
+          <button class="store-btn" data-store="Sam's 24/7" onclick="selectStoreFromBtn(this)">
+            <div class="store-icon">🌙</div>
+            <div class="store-name">Sam's 24/7</div>
+          </button>
+        </div>
+        <button class="btn-back" onclick="backToLogin()">← Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon">⏱</div>
+      <div>
+        <div class="logo-title">ShiftTrack</div>
+        <div class="logo-sub">Store Time Management</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="session-badge" id="sessionBadge" style="display:none">
+        <span id="sessionBadgeText"></span>
+      </div>
+      <div class="live-clock" id="liveClock">--:--:--</div>
+      <button class="btn-logout" id="logoutBtn" style="display:none" onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- CLOCK IN/OUT PANEL (employee only) -->
+    <section class="card punch-card" id="punchCard" style="display:none">
+      <div class="punch-header">
+        <div class="status-badge" id="statusBadge">
+          <span class="dot"></span>
+          <span id="statusText">Ready to Clock In</span>
+        </div>
+        <div class="today-date" id="todayDate"></div>
+      </div>
+
+      <div class="current-store-display">
+        <span class="store-label-small">Store</span>
+        <span class="store-name-display" id="storeNameDisplay">—</span>
+      </div>
+
+      <div class="punch-display">
+        <div class="punch-time-label">Current Time</div>
+        <div class="punch-time" id="punchTime">--:-- --</div>
+      </div>
+
+      <div class="punch-buttons">
+        <button class="btn-clock btn-in" id="clockInBtn" onclick="clockIn()">
+          <span class="btn-icon">▶</span>
+          Clock In
+        </button>
+        <button class="btn-clock btn-out" id="clockOutBtn" onclick="clockOut()" disabled>
+          <span class="btn-icon">■</span>
+          Clock Out
+        </button>
+      </div>
+
+      <div class="session-info" id="sessionInfo" style="display:none">
+        <div class="session-row">
+          <span>Clocked in at</span>
+          <span id="sessionStart" class="mono">--</span>
+        </div>
+        <div class="session-row">
+          <span>Duration so far</span>
+          <span id="sessionDuration" class="mono green">--</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- MANAGER PANEL -->
+    <section class="card manager-card" id="managerCard" style="display:none">
+      <div class="card-header">
+        <h2>Employee Management</h2>
+        <span class="badge-manager">MANAGER</span>
+      </div>
+      <div class="manager-add-row">
+        <input type="text" id="newEmpName" placeholder="Employee name..." />
+        <input type="text" id="newEmpCode" placeholder="Access code..." maxlength="10" />
+        <input type="number" id="newEmpRate" placeholder="$/hr" min="0" step="0.25" />
+        <button class="btn-secondary" onclick="managerAddEmployee()">+ Add</button>
+      </div>
+      <div class="employee-list" id="employeeList"></div>
+      <div class="manager-code-section">
+        <label>Change Manager Code</label>
+        <div class="input-row">
+          <input type="password" id="newManagerCode" placeholder="New manager code..." />
+          <button class="btn-secondary" onclick="changeManagerCode()">Update</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- WEEKLY SUMMARY PANEL -->
+    <section class="card week-card">
+      <div class="card-header">
+        <h2 id="weekTitle">This Week</h2>
+        <div class="week-nav">
+          <button class="btn-week-nav" onclick="changeWeek(-1)" title="Previous week">&#8592;</button>
+          <div class="week-range" id="weekRange"></div>
+          <button class="btn-week-nav" id="btnNextWeek" onclick="changeWeek(1)" title="Next week">&#8594;</button>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-num" id="totalHours">0.0</div>
+          <div class="stat-label">Total Hours</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="totalDays">0</div>
+          <div class="stat-label">Days Worked</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="avgOpen">--</div>
+          <div class="stat-label">Avg Open Time</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="avgClose">--</div>
+          <div class="stat-label">Avg Close Time</div>
+        </div>
+      </div>
+      <div class="bar-chart-wrap">
+        <div class="bar-chart" id="barChart"></div>
+        <div class="bar-labels" id="barLabels"></div>
+      </div>
+    </section>
+
+    <!-- SHIFT LOG TABLE -->
+    <section class="card log-card">
+      <div class="card-header">
+        <div>
+          <h2>Shift Log</h2>
+          <div class="log-week-label" id="logWeekLabel"></div>
+        </div>
+        <div class="log-controls">
+          <select id="filterStore" onchange="renderLog()" style="display:none">
+            <option value="all">All Stores</option>
+            <option value="Loteria Store">Loteria Store</option>
+            <option value="Maria's Groceries">Maria's Groceries</option>
+            <option value="Sam's 24/7">Sam's 24/7</option>
+          </select>
+          <select id="filterEmployee" onchange="renderLog()">
+            <option value="all">All Employees</option>
+          </select>
+          <button class="btn-add-shift" id="btnAddShift" onclick="openAddShiftModal()" style="display:none">+ Add Shift</button>
+          <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="shift-table">
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Store</th>
+              <th>Date</th>
+              <th>Clock In</th>
+              <th>Clock Out</th>
+              <th>Hours</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="shiftBody">
+            <tr class="empty-row">
+              <td colspan="8">No shifts recorded yet. Clock in to get started!</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ANALYTICS PANEL -->
+    <section class="card analytics-card">
+      <div class="card-header">
+        <h2>Analytics</h2>
+        <span class="badge-new">LIVE</span>
+      </div>
+      <div id="analyticsContent"></div>
+    </section>
+
+    <!-- PAYROLL CARD (manager only) -->
+    <section class="card payroll-card" id="payrollCard" style="display:none">
+      <div class="card-header">
+        <div>
+          <h2>Payroll</h2>
+          <div class="log-week-label" id="payrollWeekLabel"></div>
+        </div>
+        <div class="payroll-controls">
+          <div class="ot-wrap">
+            <label>OT after</label>
+            <input type="number" id="otThreshold" value="40" min="1" max="168" step="1" onchange="updateOTThreshold(this.value)" />
+            <label>hrs/wk at 1.5×</label>
+          </div>
+          <button class="btn-export" onclick="exportPayrollCSV()">⬇ Export CSV</button>
+          <button class="btn-print" onclick="printPayroll()">🖨 Print</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="payroll-table">
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
+              <th>Total Hrs</th>
+              <th>OT Hrs</th>
+              <th>Rate</th>
+              <th>Gross Pay</th>
+            </tr>
+          </thead>
+          <tbody id="payrollBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- SHIFT EDIT MODAL -->
+  <div class="modal-overlay" id="shiftModal" style="display:none" onclick="handleModalOverlayClick(event)">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="shiftModalTitle">Edit Shift</h3>
+        <button class="modal-close" onclick="closeShiftModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label>Employee</label>
+          <select id="smEmployee"></select>
+        </div>
+        <div class="modal-field">
+          <label>Store</label>
+          <select id="smStore">
+            <option value="Loteria Store">🏪 Loteria Store</option>
+            <option value="Maria's Groceries">🛒 Maria's Groceries</option>
+            <option value="Sam's 24/7">🌙 Sam's 24/7</option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <label>Clock In</label>
+          <input type="datetime-local" id="smClockIn" />
+        </div>
+        <div class="modal-field" id="smClockOutField">
+          <label id="smClockOutLabel">Clock Out</label>
+          <input type="datetime-local" id="smClockOut" />
+          <div class="modal-field-hint" id="smClockOutHint"></div>
+        </div>
+        <div class="modal-error" id="smError"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal-cancel" onclick="closeShiftModal()">Cancel</button>
+        <button class="btn-modal-save" onclick="saveShiftModal()">Save Shift</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
