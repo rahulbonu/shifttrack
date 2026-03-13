@@ -8,7 +8,7 @@ let state = {
   shifts: [],         // { id, employee, store, clockIn, clockOut, date, duration }
   activeShifts: {},   // { [employeeName]: { id, employee, store, clockIn, date } }
   managerCode: 'MANAGER2024',
-  overtimeThreshold: 40,
+  overtimeThreshold: null,
   session: null,      // { role: 'employee'|'manager', employee, store } — not persisted
 };
 
@@ -47,9 +47,11 @@ function loadFromStorage() {
       );
       // Ensure all employees have a rate field
       state.employees = state.employees.map(e => ({ rate: 0, ...e }));
-      // Load overtime threshold
+      // Load overtime threshold (null means not set)
       if (typeof parsed.overtimeThreshold === 'number' && parsed.overtimeThreshold > 0) {
         state.overtimeThreshold = parsed.overtimeThreshold;
+      } else {
+        state.overtimeThreshold = null;
       }
       state.shifts = parsed.shifts || [];
       // Migrate old single activeShift to activeShifts map
@@ -218,7 +220,7 @@ function enterManagerMode() {
   document.getElementById('btnAddShift').style.display = 'block';
 
   document.getElementById('payrollCard').style.display = 'block';
-  document.getElementById('otThreshold').value = state.overtimeThreshold;
+  document.getElementById('otThreshold').value = state.overtimeThreshold !== null ? state.overtimeThreshold : '';
 
   renderAll();
   renderEmployeeList();
@@ -320,12 +322,19 @@ function updateEmployeeRate(name, val) {
 }
 
 function updateOTThreshold(val) {
-  const n = parseInt(val);
-  if (!isNaN(n) && n > 0) {
-    state.overtimeThreshold = n;
-    saveToStorage();
-    renderPayroll();
+  const trimmed = val.trim();
+  if (trimmed === '') {
+    state.overtimeThreshold = null;
+  } else {
+    const n = parseInt(trimmed);
+    if (!isNaN(n) && n > 0) {
+      state.overtimeThreshold = n;
+    } else {
+      return;
+    }
   }
+  saveToStorage();
+  renderPayroll();
 }
 
 function computePayroll() {
@@ -340,8 +349,9 @@ function computePayroll() {
       hoursPerDay[new Date(s.clockIn).getDay()] += s.duration / 3600000;
     });
     const totalHours = hoursPerDay.reduce((a, b) => a + b, 0);
-    const regHours = Math.min(totalHours, state.overtimeThreshold);
-    const otHours = Math.max(0, totalHours - state.overtimeThreshold);
+    const hasThreshold = state.overtimeThreshold !== null;
+    const regHours = hasThreshold ? Math.min(totalHours, state.overtimeThreshold) : totalHours;
+    const otHours = hasThreshold ? Math.max(0, totalHours - state.overtimeThreshold) : 0;
     const rate = emp.rate || 0;
     const grossPay = regHours * rate + otHours * rate * 1.5;
     return { name: emp.name, rate, hoursPerDay, totalHours, regHours, otHours, grossPay };
@@ -932,6 +942,13 @@ function renderLog() {
   if (filterStore !== 'all') rows = rows.filter(s => s.store === filterStore);
   if (filterEmp !== 'all') rows = rows.filter(s => s.employee === filterEmp);
 
+  // Sort by date descending (newest first), active shifts always on top
+  rows.sort((a, b) => {
+    if (a._active && !b._active) return -1;
+    if (!a._active && b._active) return 1;
+    return b.clockIn - a.clockIn;
+  });
+
   if (!rows.length) {
     tbody.innerHTML = `<tr class="empty-row"><td colspan="8">No shifts recorded yet. Clock in to get started!</td></tr>`;
     return;
@@ -1294,7 +1311,9 @@ function renderManagerAnalytics() {
 
   // OT watch
   const otOver = payroll.filter(p => p.otHours > 0);
-  const otNear = payroll.filter(p => p.totalHours >= state.overtimeThreshold * 0.75 && p.otHours === 0 && p.totalHours > 0);
+  const otNear = state.overtimeThreshold !== null
+    ? payroll.filter(p => p.totalHours >= state.overtimeThreshold * 0.75 && p.otHours === 0 && p.totalHours > 0)
+    : [];
 
   // Week-over-week hours
   const { sun: prevSun, sat: prevSat } = getWeekBounds(weekOffset - 1);
@@ -1368,8 +1387,10 @@ function renderManagerAnalytics() {
         </div>
 
         <div class="mgr-ot-panel ${otOver.length > 0 ? 'has-ot' : ''}">
-          <div class="mgr-panel-title">OT Watch <span class="ot-threshold-note">(threshold: ${state.overtimeThreshold}h)</span></div>
-          ${otOver.length === 0 && otNear.length === 0
+          <div class="mgr-panel-title">OT Watch ${state.overtimeThreshold !== null ? `<span class="ot-threshold-note">(threshold: ${state.overtimeThreshold}h)</span>` : '<span class="ot-threshold-note">(no threshold set)</span>'}</div>
+          ${state.overtimeThreshold === null
+            ? '<div class="mgr-ot-clear"><span class="ot-check">—</span> Set an OT threshold in Payroll to track overtime</div>'
+            : otOver.length === 0 && otNear.length === 0
             ? '<div class="mgr-ot-clear"><span class="ot-check">✓</span> No overtime issues this week</div>'
             : `
               ${otOver.map(p => `
