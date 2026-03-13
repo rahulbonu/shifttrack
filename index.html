@@ -151,13 +151,19 @@
         <h2>Employee Management</h2>
         <span class="badge-manager">MANAGER</span>
       </div>
-      <div class="manager-add-row">
-        <input type="text" id="newEmpName" placeholder="Employee name..." />
-        <input type="text" id="newEmpCode" placeholder="Access code..." maxlength="10" />
-        <input type="number" id="newEmpRate" placeholder="$/hr" min="0" step="0.25" />
-        <button class="btn-secondary" onclick="managerAddEmployee()">+ Add</button>
+      <button class="btn-emp-toggle" id="empToggleBtn" onclick="toggleEmployeeDetails()">
+        <span>Employee Details</span>
+        <span class="emp-toggle-arrow" id="empToggleArrow">▼</span>
+      </button>
+      <div id="employeeDetailsSection" style="display:none">
+        <div class="manager-add-row">
+          <input type="text" id="newEmpName" placeholder="Employee name..." />
+          <input type="text" id="newEmpCode" placeholder="Access code..." maxlength="10" />
+          <input type="number" id="newEmpRate" placeholder="$/hr" min="0" step="0.25" />
+          <button class="btn-secondary" onclick="managerAddEmployee()">+ Add</button>
+        </div>
+        <div class="employee-list" id="employeeList"></div>
       </div>
-      <div class="employee-list" id="employeeList"></div>
       <div class="manager-code-section">
         <label>Change Manager Code</label>
         <div class="input-row">

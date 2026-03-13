@@ -310,6 +310,14 @@ function removeEmployee(name) {
   showToast(`Employee "${name}" removed.`, 'info');
 }
 
+function toggleEmployeeDetails() {
+  const section = document.getElementById('employeeDetailsSection');
+  const arrow = document.getElementById('empToggleArrow');
+  const isOpen = section.style.display !== 'none';
+  section.style.display = isOpen ? 'none' : 'block';
+  arrow.textContent = isOpen ? '▼' : '▲';
+}
+
 function renderEmployeeList() {
   const list = document.getElementById('employeeList');
   list.innerHTML = '';

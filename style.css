@@ -323,6 +323,17 @@ body {
 .emp-list-name { font-size: 14px; font-weight: 600; color: var(--text); }
 .emp-list-code { font-size: 11px; color: var(--text-muted); }
 
+.btn-emp-toggle {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 14px;
+  color: var(--text); font-family: var(--font-head); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s; margin-bottom: 4px;
+}
+.btn-emp-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.emp-toggle-arrow { font-size: 10px; color: var(--text-muted); }
+#employeeDetailsSection { margin-bottom: 8px; }
+
 .manager-code-section { margin-top: auto; }
 .manager-code-section label {
   display: block; font-size: 11px; color: var(--text-muted);
